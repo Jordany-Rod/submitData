@@ -5,11 +5,14 @@
     - Возвращает список перевалов по email. Если email не указан, то возвращает ошибку 404 (GET)
 2.  - PerevalReturnId возвращает данные перевала по id. (GET)
 """
-
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import PerevalAddedSerializer, PerevalInfoSerializer
+
+from .models import PerevalAdded
+from .serializers import PerevalAddedSerializer, PerevalInfoSerializer, PerevalUpdateSerializer
+
 
 class SubmitData(APIView):
     def get(self, request):
@@ -53,9 +56,29 @@ class SubmitData(APIView):
             'id': None
         }, status=status.HTTP_400_BAD_REQUEST)
 
-class PerevalReturnId(APIView):
+class PerevalReturnIdUpdate(APIView):
 
+    # Возвращение информации по id
     def get(self, request, id):
         pereval = get_object_or_404(PerevalAdded, id=id)
         serializer = PerevalInfoSerializer(pereval)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # Обновление перевала
+    def patch(self, request, id):
+        # Возвращаем объект перевала по id
+        pereval = get_object_or_404(PerevalAdded, id=id)
+
+        if pereval.status != 'new':
+            return Response({
+                'state': 0,
+                'message': 'Невозможно отредактировать запись. Для изменения записи ее статус должен быть "new".'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Проводим обновление
+        serializer = PerevalReturnIdUpdate(pereval, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'state': 1}, status=status.HTTP_200_OK)
+        # Ошибка валидации
+        return Response({'state': 0, 'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

@@ -90,3 +90,49 @@ class PerevalInfoSerializer(serializers.ModelSerializer):
             'level_winter', 'level_summer', 'level_autumn', 'level_spring',
             'images'
         ]
+
+class PerevalUpdateCoordsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CoordPass
+        fields = ['latitude', 'longitude', 'height']
+
+class PerevalUpdateSerializer(serializers.ModelSerializer):
+    coords = PerevalUpdateCoordsSerializer()
+    images = PerevalImagesSerializer(many=True)
+
+    class Meta:
+        model = PerevalAdded
+        fields = [
+            'beauty_title', 'title', 'other_titles', 'connect', 'add_time',
+            'level_winter', 'level_summer', 'level_autumn', 'level_spring',
+            'status', 'coords', 'images'
+        ]
+
+    def update(self, instance, validated_data):
+        coords_data = validated_data.pop('coords', None)
+        images_data = validated_data.pop('images', None)
+
+        instance.beauty_title = validated_data.get('beauty_title', instance.beauty_title)
+        instance.title = validated_data.get('title', instance.title)
+        instance.other_titles = validated_data.get('other_titles', instance.other_titles)
+        instance.connect = validated_data.get('connect', instance.connect)
+        instance.add_time = validated_data.get('add_time', instance.add_time)
+        instance.level_winter = validated_data.get('level_winter', instance.level_winter)
+        instance.level_summer = validated_data.get('level_summer', instance.level_summer)
+        instance.level_autumn = validated_data.get('level_autumn', instance.level_autumn)
+        instance.level_spring = validated_data.get('level_spring', instance.level_spring)
+        instance.save()
+
+        # Обновление координат
+        if coords_data:
+            coords_serializer = PerevalUpdateCoordsSerializer(instance.coords, data=coords_data, partial=True)
+            if coords_serializer.is_valid(raise_exception=True):
+                coords_serializer.save()
+
+        # Обновление изображений: удаление старых и добавление новых
+        if images_data:
+            instance.images.all().delete()
+            for image in images_data:
+                PerevalImages.objects.create(pereval=instance, **image)
+
+        return instance
