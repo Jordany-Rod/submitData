@@ -1,9 +1,10 @@
 """
-Представления реализуют RestAPI для добавления перевалов.
+Представления реализуют RestAPI для добавления перевалов, получения и редактирование данных перевалов.
 
 1.  - SubmitData добавляет новый перевал с вложенными данными (user, coords, images) (POST)
     - Возвращает список перевалов по email. Если email не указан, то возвращает ошибку 404 (GET)
-2.  - PerevalReturnId возвращает данные перевала по id. (GET)
+2.  - PerevalReturnIdUpdate возвращает данные перевала по id. (GET)
+    - Обновляет данные перевала по id, если статус 'new'. Обновляются поля, координаты, изображения. (PATCH)
 """
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
@@ -123,7 +124,7 @@ class PerevalReturnIdUpdate(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Проводим обновление
-        serializer = PerevalReturnIdUpdate(pereval, data=request.data, partial=True)
+        serializer = PerevalUpdateSerializer(pereval, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({'state': 1}, status=status.HTTP_200_OK)
