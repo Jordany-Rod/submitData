@@ -1,15 +1,26 @@
 """
 Представления реализуют RestAPI для добавления перевалов.
 
-Класс SubmitData добавляет новый перевал с вложенными данными (user, coords, images)
+1.  - SubmitData добавляет новый перевал с вложенными данными (user, coords, images) (POST)
+    - Возвращает список перевалов по email. Если email не указан, то возвращает ошибку 404 (GET)
+2.  - PerevalReturnId возвращает данные перевала по id. (GET)
 """
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import PerevalAddedSerializer
+from .serializers import PerevalAddedSerializer, PerevalInfoSerializer
 
 class SubmitData(APIView):
+    def get(self, request):
+        email = request.query_params.get('user__email')
+        if not email:
+            return Response({'error': 'Не указан параметр user__email'}, status=400)
+
+        perevals = PerevalAdded.objects.filter(user__email=email)
+        serializer = PerevalInfoSerializer(perevals, many=True)
+        return Response(serializer.data, status=200)
+
 
     def post(self, request):
         serializer = PerevalAddedSerializer(data=request.data)
@@ -41,3 +52,10 @@ class SubmitData(APIView):
             'errors': serializer.errors,
             'id': None
         }, status=status.HTTP_400_BAD_REQUEST)
+
+class PerevalReturnId(APIView):
+
+    def get(self, request, id):
+        pereval = get_object_or_404(PerevalAdded, id=id)
+        serializer = PerevalInfoSerializer(pereval)
+        return Response(serializer.data, status=status.HTTP_200_OK)
