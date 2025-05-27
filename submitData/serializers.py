@@ -6,7 +6,10 @@
 2. CoordPassSerializer - сериализует координаты перевала.
 3. PerevalImagesSerializer - сериализует изображения перевала (название и ссылка).
 4. PerevalAddedSerializer - сериализует перевал с вложенными данными (user, coords, images),
-  создаёт связанные объекты.
+  создаёт связанные объекты.\
+5. PerevalUpdateCoordsSerializer - отвечает за обновление координат.
+6. PerevalUpdateSerializer - отвечает за обновление перевала при статусе "new". Позволяет обновлять поля, координаты и
+изображения.
 """
 
 from .models import *
